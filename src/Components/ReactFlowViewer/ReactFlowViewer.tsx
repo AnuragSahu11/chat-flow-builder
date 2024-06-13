@@ -1,48 +1,53 @@
 import { Box } from "@mui/material";
-import { useCallback } from "react";
 import ReactFlow, {
   Background,
-  Connection,
   Controls,
+  Edge,
   MiniMap,
-  addEdge,
-  useEdgesState,
-  useNodesState,
+  Node,
+  OnConnect,
+  OnEdgesChange,
+  OnNodesChange,
+  ReactFlowInstance,
 } from "reactflow";
-
 import "reactflow/dist/style.css";
-
-const initialNodes = [
-  { id: "1", position: { x: 0, y: 0 }, data: { label: "1" } },
-  { id: "2", position: { x: 0, y: 100 }, data: { label: "2" } },
-];
-const initialEdges = [{ id: "e1-2", source: "1", target: "2" }];
+import { TextNode } from "../Nodes/TextNode/TextNode";
+import { Dispatch, DragEventHandler } from "react";
 
 type ReactFlowViewerPropType = {
-  height: string;
-  width: string;
+  setReactFlowInstance: Dispatch<ReactFlowInstance>;
+  onDrop: DragEventHandler;
+  onDragOver: DragEventHandler;
+  nodes: Node[];
+  edges: Edge[];
+  onNodesChange: OnNodesChange;
+  onEdgesChange: OnEdgesChange;
+  onConnect: OnConnect;
 };
 
 export default function ReactFlowViewer({
-  height,
-  width,
+  setReactFlowInstance,
+  onDrop,
+  onDragOver,
+  onNodesChange,
+  onEdgesChange,
+  onConnect,
+  nodes,
+  edges,
 }: ReactFlowViewerPropType) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  console.log(setNodes);
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
-
   return (
-    <Box width={width} height={height}>
+    <Box width={"100%"} height={"100%"}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        nodeTypes={{ textNode: TextNode }}
+        onInit={setReactFlowInstance}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        fitView
       >
         <Controls />
         <MiniMap />

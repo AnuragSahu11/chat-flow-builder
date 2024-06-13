@@ -1,12 +1,10 @@
 import { Box, Button } from "@mui/material";
 
-type HeaderPanelProps = {
-  height: string;
-};
+type HeaderPanelProps = {};
 
-export const HeaderPanel = ({ height }: HeaderPanelProps) => {
+export const HeaderPanel = ({}: HeaderPanelProps) => {
   return (
-    <Box height={height} display={"flex"} justifyContent={"flex-end"}>
+    <Box display={"flex"} justifyContent={"flex-end"}>
       <Button variant="contained">Save</Button>
     </Box>
   );
