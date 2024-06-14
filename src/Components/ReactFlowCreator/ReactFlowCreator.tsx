@@ -1,6 +1,6 @@
 import { Grid } from "@mui/material";
 import { nanoid } from "nanoid";
-import { DragEvent, useCallback, useRef, useState } from "react";
+import { DragEvent, MouseEvent, useCallback, useRef, useState } from "react";
 import {
   Connection,
   Edge,
@@ -17,6 +17,12 @@ import { HeaderPanel } from "../HeaderPanel/HeaderPanel";
 import { NodesPanel } from "../NodesPanel/NodesPanel";
 import ReactFlowViewer from "../ReactFlowViewer/ReactFlowViewer";
 
+export type NodeEditDataType = {
+  id: string | null;
+};
+
+export type OnNodeClick = (event: MouseEvent, node: Node) => void;
+
 const initialNodes: Node[] = [
   {
     id: "1",
@@ -32,6 +38,12 @@ type ReactFlowCreatorProps = {
   width: string;
   height: string;
 };
+
+export type OnNodeUpdateType = (
+  nodeId: string,
+  valueKey: string,
+  value: unknown
+) => void;
 
 export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -84,6 +96,35 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
     [reactFlowInstance]
   );
 
+  const [nodeEditData, setNodeEditData] = useState<NodeEditDataType>({
+    id: null,
+  });
+
+  const onNodeClick: OnNodeClick = useCallback(
+    (event: MouseEvent, node: Node) => {
+      const { id } = node;
+      setNodeEditData({ id });
+    },
+    []
+  );
+
+  const onNodeUpdate: OnNodeUpdateType = (nodeId, valueKey, value) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          // it's important that you create a new object here
+          // in order to notify react flow about the change
+          node.data = {
+            ...node.data,
+            [valueKey]: value,
+          };
+        }
+
+        return node;
+      })
+    );
+  };
+
   return (
     <Grid height={height} width={width} container xs={12}>
       <ReactFlowProvider>
@@ -108,10 +149,11 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
                 setReactFlowInstance={setReactFlowInstance}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
+                onNodeClick={onNodeClick}
               />
             </Grid>
             <Grid item xs={2}>
-              <NodesPanel />
+              <NodesPanel onNodeUpdate={onNodeUpdate} nodeEditData={nodeEditData} />
             </Grid>
           </Grid>
         </Grid>

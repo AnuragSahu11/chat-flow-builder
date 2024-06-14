@@ -1,7 +1,21 @@
-import { Box } from "@mui/material";
-import { DragEvent } from "react";
+import { Box, TextField } from "@mui/material";
+import { DragEvent, useState } from "react";
+import {
+  NodeEditDataType,
+  OnNodeUpdateType,
+} from "../ReactFlowCreator/ReactFlowCreator";
 
-export const NodesPanel = () => {
+type NodesPanelPropType = {
+  nodeEditData: NodeEditDataType;
+  onNodeUpdate: OnNodeUpdateType;
+};
+
+export const NodesPanel = ({
+  nodeEditData,
+  onNodeUpdate,
+}: NodesPanelPropType) => {
+  const { id } = nodeEditData;
+
   const onDragStart = (event: DragEvent, nodeType: string) => {
     event.dataTransfer.setData("application/reactflow", nodeType);
     event.dataTransfer.effectAllowed = "move";
@@ -11,22 +25,35 @@ export const NodesPanel = () => {
     <Box
       sx={{
         width: "100%",
-        backgroundColor: "black",
         height: "100%",
       }}
     >
-      <Box
-        sx={{
-          width: "200px",
-          height: "50px",
-          backgroundColor: "red",
-        }}
-        className="dndnode input"
-        onDragStart={(event) => onDragStart(event, "input")}
-        draggable
-      >
-        Input Node
-      </Box>
+      {id ? (
+        <Box width={"100%"} height={"100%"}>
+          <TextField
+            fullWidth
+            id="outlined-basic"
+            label="Outlined"
+            variant="outlined"
+            onChange={(event) => {
+              onNodeUpdate(id, "label", event.target.value);
+            }}
+          />
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            width: "200px",
+            height: "50px",
+            backgroundColor: "red",
+          }}
+          className="dndnode input"
+          onDragStart={(event) => onDragStart(event, "textNode")}
+          draggable
+        >
+          Input Node
+        </Box>
+      )}
     </Box>
   );
 };

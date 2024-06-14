@@ -13,6 +13,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { TextNode } from "../Nodes/TextNode/TextNode";
 import { Dispatch, DragEventHandler } from "react";
+import { OnNodeClick } from "../ReactFlowCreator/ReactFlowCreator";
 
 type ReactFlowViewerPropType = {
   setReactFlowInstance: Dispatch<ReactFlowInstance>;
@@ -23,7 +24,10 @@ type ReactFlowViewerPropType = {
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
+  onNodeClick: OnNodeClick;
 };
+
+const nodeTypes = { textNode: TextNode };
 
 export default function ReactFlowViewer({
   setReactFlowInstance,
@@ -34,6 +38,7 @@ export default function ReactFlowViewer({
   onConnect,
   nodes,
   edges,
+  onNodeClick,
 }: ReactFlowViewerPropType) {
   return (
     <Box width={"100%"} height={"100%"}>
@@ -43,11 +48,12 @@ export default function ReactFlowViewer({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        nodeTypes={{ textNode: TextNode }}
+        nodeTypes={nodeTypes}
         onInit={setReactFlowInstance}
         onDrop={onDrop}
         onDragOver={onDragOver}
         fitView
+        onNodeClick={onNodeClick}
       >
         <Controls />
         <MiniMap />
