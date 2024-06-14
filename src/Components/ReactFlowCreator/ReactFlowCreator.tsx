@@ -103,6 +103,7 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
   const onNodeClick: OnNodeClick = useCallback(
     (event: MouseEvent, node: Node) => {
       const { id } = node;
+      console.log(event);
       setNodeEditData({ id });
     },
     []
@@ -153,7 +154,10 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
               />
             </Grid>
             <Grid item xs={2}>
-              <NodesPanel onNodeUpdate={onNodeUpdate} nodeEditData={nodeEditData} />
+              <NodesPanel
+                onNodeUpdate={onNodeUpdate}
+                nodeEditData={nodeEditData}
+              />
             </Grid>
           </Grid>
         </Grid>
