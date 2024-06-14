@@ -1,4 +1,5 @@
 import { Box } from "@mui/material";
+import { Dispatch, DragEventHandler } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -12,7 +13,6 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { TextNode } from "../Nodes/TextNode/TextNode";
-import { Dispatch, DragEventHandler } from "react";
 import { OnNodeClick } from "../ReactFlowCreator/ReactFlowCreator";
 
 type ReactFlowViewerPropType = {

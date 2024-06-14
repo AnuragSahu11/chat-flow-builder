@@ -1,11 +1,16 @@
 import { Box, Button } from "@mui/material";
+import { OnSave } from "../ReactFlowCreator/ReactFlowCreator";
 
-type HeaderPanelProps = {};
+type HeaderPanelProps = {
+  onSave: OnSave;
+};
 
-export const HeaderPanel = ({}: HeaderPanelProps) => {
+export const HeaderPanel = ({ onSave }: HeaderPanelProps) => {
   return (
     <Box display={"flex"} justifyContent={"flex-end"}>
-      <Button variant="contained">Save</Button>
+      <Button onClick={onSave} variant="contained">
+        Save
+      </Button>
     </Box>
   );
 };

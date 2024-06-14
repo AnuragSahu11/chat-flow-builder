@@ -22,6 +22,7 @@ export type NodeEditDataType = {
 };
 
 export type OnNodeClick = (event: MouseEvent, node: Node) => void;
+export type OnSave = () => void;
 
 const initialNodes: Node[] = [
   {
@@ -45,12 +46,12 @@ export type OnNodeUpdateType = (
   value: unknown
 ) => void;
 
+const flowKey = "example-flow";
 export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<
     ReactFlowInstance | undefined
   >();
-
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
@@ -109,6 +110,12 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
     []
   );
 
+  const onSave: OnSave = useCallback(() => {
+    if (reactFlowInstance) {
+      const flow = reactFlowInstance.toObject();
+      localStorage.setItem(flowKey, JSON.stringify(flow));
+    }
+  }, [reactFlowInstance]);
   const onNodeUpdate: OnNodeUpdateType = (nodeId, valueKey, value) => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -137,7 +144,7 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
           xs={12}
         >
           <Grid height={"10vh"} item xs={12}>
-            <HeaderPanel />
+            <HeaderPanel onSave={onSave} />
           </Grid>
           <Grid item height={"100%"} container xs={12}>
             <Grid item xs={10}>
