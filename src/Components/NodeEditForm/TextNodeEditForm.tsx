@@ -1,6 +1,7 @@
 import CancelIcon from "@mui/icons-material/Cancel";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { OnNodeUpdateType } from "../ReactFlowCreator/ReactFlowCreator";
+import { useEffect, useState } from "react";
 
 export const TextNodeEditForm = ({
   nodeId,
@@ -11,6 +12,17 @@ export const TextNodeEditForm = ({
   onNodeUpdate: OnNodeUpdateType;
   onNodeEditClose: () => void;
 }) => {
+  const [inputValue, setInputValue] = useState<string>("");
+
+  const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value);
+    onNodeUpdate(nodeId, "label", event.target.value);
+  };
+
+  useEffect(() => {
+    setInputValue("");
+  }, [nodeId]);
+
   return (
     <Box width={"100%"} height={"100%"}>
       <Box>
@@ -19,13 +31,12 @@ export const TextNodeEditForm = ({
         </Typography>
       </Box>
       <TextField
+        value={inputValue}
         fullWidth
         id="outlined-basic"
         variant="standard"
         label="Label"
-        onChange={(event) => {
-          onNodeUpdate(nodeId, "label", event.target.value);
-        }}
+        onChange={onInputChange}
       />
       <Button
         onClick={onNodeEditClose}
