@@ -16,6 +16,7 @@ import "reactflow/dist/style.css";
 import { HeaderPanel } from "../HeaderPanel/HeaderPanel";
 import { NodesPanel } from "../NodesPanel/NodesPanel";
 import ReactFlowViewer from "../ReactFlowViewer/ReactFlowViewer";
+import { ERROR_CODE_UNCONNECTED_NODE } from "../../config/general-config";
 
 export type NodeEditDataType = {
   id: string | null;
@@ -46,6 +47,13 @@ export type OnNodeUpdateType = (
   value: unknown
 ) => void;
 
+export type ErrorData = {
+  code: string | null;
+  data: string | null | undefined;
+};
+
+const initialErrorState = { code: null, data: null };
+
 const flowKey = "example-flow";
 export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -54,6 +62,15 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
   >();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [errorData, setErrorData] = useState<ErrorData>(initialErrorState);
+
+  const showError = (code: string, data?: string): void => {
+    setErrorData({ code, data });
+  };
+
+  const removeError = () => {
+    setErrorData(initialErrorState);
+  };
 
   const onConnect: OnConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -103,19 +120,41 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
 
   const onNodeClick: OnNodeClick = useCallback(
     (event: MouseEvent, node: Node) => {
-      const { id } = node;
       console.log(event);
+      const { id } = node;
       setNodeEditData({ id });
     },
     []
   );
 
+  const onNodeEditClose = () => {
+    setNodeEditData({ id: null });
+  };
+
+  const checkNoNodeHasEmptyTarget = (nodes: Node[], edges: Edge[]): boolean => {
+    const nodesHavingEdge: string[] = [];
+    nodes.forEach(({ id }: Node) => {
+      if (!nodesHavingEdge.includes(id)) {
+        const edgeConnectedToNode = edges.find(({ source, target }: Edge) => {
+          return source === id || target === id;
+        });
+        edgeConnectedToNode && nodesHavingEdge.push(id);
+      }
+    });
+    return nodesHavingEdge.length === nodes.length;
+  };
+
   const onSave: OnSave = useCallback(() => {
     if (reactFlowInstance) {
-      const flow = reactFlowInstance.toObject();
-      localStorage.setItem(flowKey, JSON.stringify(flow));
+      if (checkNoNodeHasEmptyTarget(nodes, edges)) {
+        const flow = reactFlowInstance.toObject();
+        localStorage.setItem(flowKey, JSON.stringify(flow));
+        removeError();
+      } else {
+        showError(ERROR_CODE_UNCONNECTED_NODE);
+      }
     }
-  }, [reactFlowInstance]);
+  }, [reactFlowInstance, nodes, edges]);
   const onNodeUpdate: OnNodeUpdateType = (nodeId, valueKey, value) => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -134,7 +173,17 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
   };
 
   return (
-    <Grid height={height} width={width} container xs={12}>
+    <Grid
+      borderRadius={1}
+      sx={{
+        overflow: "hidden",
+      }}
+      maxHeight={"100%"}
+      height={height}
+      width={width}
+      container
+      xs={12}
+    >
       <ReactFlowProvider>
         <Grid
           ref={reactFlowWrapper}
@@ -143,8 +192,8 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
           container
           xs={12}
         >
-          <Grid height={"10vh"} item xs={12}>
-            <HeaderPanel onSave={onSave} />
+          <Grid height={"7vh"} item xs={12}>
+            <HeaderPanel onSave={onSave} errorData={errorData} />
           </Grid>
           <Grid item height={"100%"} container xs={12}>
             <Grid item xs={10}>
@@ -162,6 +211,7 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
             </Grid>
             <Grid item xs={2}>
               <NodesPanel
+                onNodeEditClose={onNodeEditClose}
                 onNodeUpdate={onNodeUpdate}
                 nodeEditData={nodeEditData}
               />

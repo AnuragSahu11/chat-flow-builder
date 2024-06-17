@@ -1,5 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { Handle, Position } from "reactflow";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 
 type TextNodeDataType = {
   label: string;
@@ -23,24 +24,50 @@ export const TextNode = ({ data, isConnectable }: TextNodePropType) => {
       />
       <Box
         sx={{
-          borderRadius: "1px",
-          border: "solid 1px black",
+          minWidth: "100px",
+          borderRadius: "3px",
+          overflow: "hidden",
+          border: "solid 1px #e6e6e9",
           display: "flex",
           flexDirection: "column",
+          textAlign: "center",
         }}
       >
         <Box
           sx={{
-            height: "5vh",
-            backgroundColor: "green",
-          }}
-        ></Box>
-        <Box
-          sx={{
-            backgroundColor: "white",
+            py: "2px",
+            px: "5px",
+            display: "flex",
+            backgroundColor: "#4ebb7d",
+            height: "min-height",
+            justifyContent: "space-between",
           }}
         >
-          <Typography>{data.label}</Typography>
+          <Typography
+            sx={{
+              fontSize: "0.5rem",
+              color: "white",
+            }}
+          >
+            Send Message
+          </Typography>{" "}
+          <WhatsAppIcon sx={{ fontSize: "12px", color: "white" }} />
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            backgroundColor: "white",
+            justifyContent: "center",
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: "0.6rem",
+            }}
+            variant="caption"
+          >
+            {data.label}
+          </Typography>
         </Box>
       </Box>
       <Handle
