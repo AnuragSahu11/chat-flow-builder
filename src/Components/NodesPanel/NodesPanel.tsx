@@ -1,25 +1,33 @@
-import MessageIcon from "@mui/icons-material/Message";
-import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Tooltip, Typography } from "@mui/material";
 import { DragEvent } from "react";
+import { TextNodeEditForm } from "../NodeEditForm/TextNodeEditForm";
 import {
-  NodeEditDataType,
+  NodeConfigurationType,
+  NodeEditDataFormType,
   OnNodeUpdateType,
 } from "../ReactFlowCreator/ReactFlowCreator";
-import CancelIcon from "@mui/icons-material/Cancel";
+import {
+  NODE_ACTIVE_TOOLTIP_TITLE,
+  NODE_DISABLED_TOOLTIP_TITLE,
+} from "../../config/general-config";
 
 type NodesPanelPropType = {
-  nodeEditData: NodeEditDataType;
+  nodeEditData: NodeEditDataFormType;
   onNodeUpdate: OnNodeUpdateType;
   onNodeEditClose: () => void;
+  nodeConfiguration: NodeConfigurationType[];
 };
 
 export const NodesPanel = ({
   nodeEditData,
   onNodeUpdate,
   onNodeEditClose,
+  nodeConfiguration,
 }: NodesPanelPropType) => {
   const { id } = nodeEditData;
+  const showNodeEditForm = id;
 
+  // * RUNS WHEN DRAG STARTED
   const onDragStart = (event: DragEvent, nodeType: string) => {
     event.dataTransfer.setData("application/reactflow", nodeType);
     event.dataTransfer.effectAllowed = "move";
@@ -39,49 +47,49 @@ export const NodesPanel = ({
         </Typography>
       </Box>
       <Box px={"10px"}>
-        {id ? (
-          <Box width={"100%"} height={"100%"}>
-            <Box>
-              <Typography variant="body2" textAlign={"center"}>
-                Edit Node
-              </Typography>
-            </Box>
-            <TextField
-              fullWidth
-              id="outlined-basic"
-              variant="standard"
-              label="Label"
-              onChange={(event) => {
-                onNodeUpdate(id, "label", event.target.value);
-              }}
-            />
-            <Button
-              onClick={onNodeEditClose}
-              startIcon={<CancelIcon />}
-              variant="outlined"
-              sx={{ mt: 2 }}
-              color="error"
-              fullWidth
-            >
-              Close
-            </Button>
-          </Box>
+        {showNodeEditForm ? (
+          <TextNodeEditForm
+            nodeId={id}
+            onNodeEditClose={onNodeEditClose}
+            onNodeUpdate={onNodeUpdate}
+          />
         ) : (
-          <Tooltip title="Please Drag & Drop to the Canvas to use it">
-            <Button
-              startIcon={<MessageIcon />}
-              sx={{
-                width: "100%",
-              }}
-              variant="contained"
-              size="large"
-              className="dndnode input"
-              onDragStart={(event) => onDragStart(event, "textNode")}
-              draggable
-            >
-              Text Node
-            </Button>
-          </Tooltip>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "15px",
+            }}
+          >
+            {nodeConfiguration.map(({ nodeName, active, icon, nodeType }) => {
+              return (
+                <Tooltip
+                  title={
+                    active
+                      ? NODE_ACTIVE_TOOLTIP_TITLE
+                      : NODE_DISABLED_TOOLTIP_TITLE
+                  }
+                >
+                  <Button
+                    disabled={!active}
+                    startIcon={icon}
+                    sx={{
+                      width: "100%",
+                    }}
+                    variant="contained"
+                    size="large"
+                    className="dndnode input"
+                    onDragStart={(event) =>
+                      active && onDragStart(event, nodeType)
+                    }
+                    draggable
+                  >
+                    {nodeName}
+                  </Button>
+                </Tooltip>
+              );
+            })}
+          </Box>
         )}
       </Box>
     </Box>

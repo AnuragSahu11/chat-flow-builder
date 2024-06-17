@@ -17,7 +17,6 @@ export const HeaderPanel = ({ onSave, errorData }: HeaderPanelProps) => {
         backgroundColor: "#f3f3f3",
       }}
       display={"flex"}
-      // justifyContent={"flex-start"}
     >
       <Button
         color="success"

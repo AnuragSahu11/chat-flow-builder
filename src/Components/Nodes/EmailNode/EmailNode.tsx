@@ -1,18 +1,18 @@
+import { EmailOutlined } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import { Handle, Position } from "reactflow";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 
-type TextNodeDataType = {
+type EmailNodeDataType = {
   label: string;
   color: string;
 };
 
-type TextNodePropType = {
-  data: TextNodeDataType;
+type EmailNodePropType = {
+  data: EmailNodeDataType;
   isConnectable: boolean;
 };
 
-export const TextNode = ({ data, isConnectable }: TextNodePropType) => {
+export const EmailNode = ({ data, isConnectable }: EmailNodePropType) => {
   return (
     <>
       <Handle
@@ -37,7 +37,7 @@ export const TextNode = ({ data, isConnectable }: TextNodePropType) => {
             py: "2px",
             px: "5px",
             display: "flex",
-            backgroundColor: "#4ebb7d",
+            backgroundColor: "#1565c0",
             height: "min-height",
             justifyContent: "space-between",
           }}
@@ -48,9 +48,9 @@ export const TextNode = ({ data, isConnectable }: TextNodePropType) => {
               color: "white",
             }}
           >
-            Send Message
+            Send Email
           </Typography>{" "}
-          <WhatsAppIcon sx={{ fontSize: "12px", color: "white" }} />
+          <EmailOutlined sx={{ fontSize: "12px", color: "white" }} />
         </Box>
         <Box
           sx={{

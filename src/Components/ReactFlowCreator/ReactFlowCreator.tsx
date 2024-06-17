@@ -1,40 +1,35 @@
-import { Grid } from "@mui/material";
-import { nanoid } from "nanoid";
-import { DragEvent, MouseEvent, useCallback, useRef, useState } from "react";
-import {
-  Connection,
+import { Alert, Grid, Snackbar } from "@mui/material";
+import { MouseEvent, ReactElement, useCallback, useState } from "react";
+import ReactFlow, {
+  Background,
+  Controls,
   Edge,
+  MiniMap,
   Node,
-  OnConnect,
-  ReactFlowInstance,
   ReactFlowProvider,
-  addEdge,
-  useEdgesState,
-  useNodesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import {
+  ERROR_CODE_UNCONNECTED_NODE,
+  FLOW_SAVE_NAME,
+  INITIAL_EDGES,
+  INITIAL_NODES,
+  NODE_TYPE_EMAIL_NODE,
+  NODE_TYPE_TEXT_NODE,
+} from "../../config/general-config";
+import { useReactFlowCreator } from "../../hooks/useReactFlowCreater";
 import { HeaderPanel } from "../HeaderPanel/HeaderPanel";
 import { NodesPanel } from "../NodesPanel/NodesPanel";
-import ReactFlowViewer from "../ReactFlowViewer/ReactFlowViewer";
-import { ERROR_CODE_UNCONNECTED_NODE } from "../../config/general-config";
+import { TextNode } from "../Nodes/TextNode/TextNode";
+import { EmailNode } from "../Nodes/EmailNode/EmailNode";
+import { EmailOutlined, MessageOutlined } from "@mui/icons-material";
 
-export type NodeEditDataType = {
+export type NodeEditDataFormType = {
   id: string | null;
 };
 
 export type OnNodeClick = (event: MouseEvent, node: Node) => void;
 export type OnSave = () => void;
-
-const initialNodes: Node[] = [
-  {
-    id: "1",
-    type: "textNode",
-    position: { x: 0, y: 0 },
-    data: { label: "1", color: "red" },
-  },
-  { id: "2", position: { x: 0, y: 100 }, data: { label: "2" } },
-];
-const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
 
 type ReactFlowCreatorProps = {
   width: string;
@@ -52,86 +47,78 @@ export type ErrorData = {
   data: string | null | undefined;
 };
 
+export type NodeConfigurationType = {
+  nodeType: string;
+  icon: ReactElement;
+  active: boolean;
+  nodeName: string;
+};
+
+const initialNodes: Node[] = INITIAL_NODES;
+const initialEdges: Edge[] = INITIAL_EDGES;
+
 const initialErrorState = { code: null, data: null };
+const nodeTypes = { textNode: TextNode, emailNode: EmailNode };
+const nodeConfiguration: NodeConfigurationType[] = [
+  // * TO CREATE A NEW NODE COMPONENT AND ADD A NODE TYPE CORRESPONDING TO IT
 
-const flowKey = "example-flow";
+  {
+    nodeType: NODE_TYPE_TEXT_NODE,
+    icon: <MessageOutlined />,
+    active: true,
+    nodeName: "Text Node",
+  },
+  {
+    nodeType: NODE_TYPE_EMAIL_NODE,
+    icon: <EmailOutlined />,
+    active: false,
+    nodeName: "Email Node",
+  },
+];
+
 export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState<
-    ReactFlowInstance | undefined
-  >();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  // * STATES
   const [errorData, setErrorData] = useState<ErrorData>(initialErrorState);
+  const [showSaveSuccessToast, setShowSaveSuccessToast] =
+    useState<boolean>(false);
+  const [nodeEditDataForm, setNodeEditDataForm] =
+    useState<NodeEditDataFormType>({
+      id: null,
+    });
 
-  const showError = (code: string, data?: string): void => {
-    setErrorData({ code, data });
-  };
+  // * HOOKS
+  const {
+    nodes,
+    edges,
+    setNodes,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDrop,
+    onDragOver,
+    reactFlowWrapper,
+    reactFlowInstance,
+    setReactFlowInstance,
+  } = useReactFlowCreator(initialEdges, initialNodes);
 
-  const removeError = () => {
-    setErrorData(initialErrorState);
-  };
+  // * FUNCTIONS
 
-  const onConnect: OnConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
-
-  const onDragOver = useCallback((event: DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  }, []);
-
-  const onDrop = useCallback(
-    (event: DragEvent) => {
-      event.preventDefault();
-
-      const type = event.dataTransfer.getData("application/reactflow");
-
-      // check if the dropped element is valid
-      if (typeof type === "undefined" || !type) {
-        return;
-      }
-
-      // reactFlowInstance.project was renamed to reactFlowInstance.screenToFlowPosition
-      // and you don't need to subtract the reactFlowBounds.left/top anymore
-      // details: https://reactflow.dev/whats-new/2023-11-10
-      if (reactFlowInstance) {
-        const position = reactFlowInstance.screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY,
-        });
-        const newNode = {
-          id: nanoid(),
-          type,
-          position,
-          data: { label: `${type} node` },
-        };
-
-        setNodes((nds) => nds.concat(newNode));
-      }
-    },
-    [reactFlowInstance]
-  );
-
-  const [nodeEditData, setNodeEditData] = useState<NodeEditDataType>({
-    id: null,
-  });
-
+  // * RUNS WHEN A NODE IS CLICKED
   const onNodeClick: OnNodeClick = useCallback(
-    (event: MouseEvent, node: Node) => {
-      console.log(event);
+    (_event: MouseEvent, node: Node) => {
       const { id } = node;
-      setNodeEditData({ id });
+      setNodeEditDataForm({ id });
     },
     []
   );
 
+  // * RUNS WHEN NODE EDIT FORM CLOSED
   const onNodeEditClose = () => {
-    setNodeEditData({ id: null });
+    setNodeEditDataForm({ id: null });
   };
 
-  const checkNoNodeHasEmptyTarget = (nodes: Node[], edges: Edge[]): boolean => {
+  // * TO CHECK FOR UN-CONNECTED NODES
+  const checkUnconnectedNodes = (nodes: Node[], edges: Edge[]): boolean => {
     const nodesHavingEdge: string[] = [];
     nodes.forEach(({ id }: Node) => {
       if (!nodesHavingEdge.includes(id)) {
@@ -144,23 +131,25 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
     return nodesHavingEdge.length === nodes.length;
   };
 
+  // * RUNS WHEN SAVE BUTTON CLICKED
   const onSave: OnSave = useCallback(() => {
     if (reactFlowInstance) {
-      if (checkNoNodeHasEmptyTarget(nodes, edges)) {
+      if (checkUnconnectedNodes(nodes, edges)) {
         const flow = reactFlowInstance.toObject();
-        localStorage.setItem(flowKey, JSON.stringify(flow));
+        localStorage.setItem(FLOW_SAVE_NAME, JSON.stringify(flow));
+        setShowSaveSuccessToast(true);
         removeError();
       } else {
         showError(ERROR_CODE_UNCONNECTED_NODE);
       }
     }
   }, [reactFlowInstance, nodes, edges]);
+
+  // * RUNS WHEN A NODE IS EDITED
   const onNodeUpdate: OnNodeUpdateType = (nodeId, valueKey, value) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
-          // it's important that you create a new object here
-          // in order to notify react flow about the change
           node.data = {
             ...node.data,
             [valueKey]: value,
@@ -171,6 +160,16 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
       })
     );
   };
+
+  // * RUNS WHEN AN ERROR IS DETECTED
+  const showError = useCallback((code: string, data?: string): void => {
+    setErrorData({ code, data });
+  }, []);
+
+  // * RUNS WHEN THE ERROR HAS BEEN RESOLVED
+  const removeError = useCallback(() => {
+    setErrorData(initialErrorState);
+  }, []);
 
   return (
     <Grid
@@ -184,6 +183,20 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
       container
       xs={12}
     >
+      <Snackbar
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        open={showSaveSuccessToast}
+        onClose={() => setShowSaveSuccessToast(false)}
+      >
+        <Alert
+          onClose={() => setShowSaveSuccessToast(false)}
+          severity="success"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          Save Successful
+        </Alert>
+      </Snackbar>
       <ReactFlowProvider>
         <Grid
           ref={reactFlowWrapper}
@@ -197,23 +210,30 @@ export const ReactFlowCreator = ({ width, height }: ReactFlowCreatorProps) => {
           </Grid>
           <Grid item height={"100%"} container xs={12}>
             <Grid item xs={10}>
-              <ReactFlowViewer
+              <ReactFlow
                 nodes={nodes}
                 edges={edges}
-                onConnect={onConnect}
-                onEdgesChange={onEdgesChange}
                 onNodesChange={onNodesChange}
-                setReactFlowInstance={setReactFlowInstance}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                nodeTypes={nodeTypes}
+                onInit={setReactFlowInstance}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
+                fitView
                 onNodeClick={onNodeClick}
-              />
+              >
+                <Controls />
+                <MiniMap />
+                <Background gap={12} size={1} />
+              </ReactFlow>
             </Grid>
             <Grid item xs={2}>
               <NodesPanel
+                nodeConfiguration={nodeConfiguration}
                 onNodeEditClose={onNodeEditClose}
                 onNodeUpdate={onNodeUpdate}
-                nodeEditData={nodeEditData}
+                nodeEditData={nodeEditDataForm}
               />
             </Grid>
           </Grid>
